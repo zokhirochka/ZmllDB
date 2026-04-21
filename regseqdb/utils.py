@@ -18,7 +18,7 @@ def connect_db(credentials_dictionary: dict) -> tuple:
         """
 
         # Validate Keys
-        required_keys = ["host" "port", "database", "user", "password"]
+        required_keys = ["host", "port", "database", "username", "password"]
         if not all(key in credentials_dictionary for key in required_keys):
                 missing_keys = set(required_keys ) - set(credentials_dictionary.keys())
                 raise ValueError(f"ERROR: Database Connection Error. Missing parameters {missing_keys}.")

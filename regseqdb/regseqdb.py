@@ -30,7 +30,13 @@ class RegSeqDB:
 		Returns:
 			None
 		"""
-		keys = {host, port, database, username, password}
+		keys = {
+			"host": host,
+			"port": port,
+			"database": database,
+			"username": username,
+			"password": password
+		}
 		self.connection, self.cursor = utils.connect_db(keys)
 		return
 
@@ -45,10 +51,10 @@ class RegSeqDB:
 			Tuple of (results, colnames, rowcount)
 		"""
 		return utils.exec_query(
-            cursor=self.cursor,
-            query=query,
-            inputs=inputs
-        )
+			cursor=self.cursor,
+			query=query,
+			inputs=inputs
+		)
 
 
 	######################################
@@ -73,17 +79,17 @@ class RegSeqDB:
 
 		# Define inputs and query
 		inputs = [promoter, condition]
-        query = """
-        		SELECT sID, num_DNA, num_RNA FROM Promoters
-        			JOIN PromoterSequences USING(pID)
-        			JOIN BarcodeCounts USING(sID)
-        			JOIN Experiments USING (eID)
-        		WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s) AND 
-        			  eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1);
-        		"""
+		query = """
+				SELECT sID, num_DNA, num_RNA FROM Promoters
+					JOIN PromoterSequences USING(pID)
+					JOIN BarcodeCounts USING(sID)
+					JOIN Experiments USING (eID)
+				WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s) AND 
+					  eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1);
+				"""
 
-        # Submit Query
-        results = self.__query(query, inputs)
+		# Submit Query
+		results = self.__query(query, inputs)
 		return results
 
 
@@ -113,33 +119,33 @@ class RegSeqDB:
 		# Define inputs and query
 		inputs = [promoter, condition, tf]
 
-        # Include RNAP Binding
+		# Include RNAP Binding
 		if include_rnap:
 			query += """
-	        		SELECT sID, num_DNA, num_RNA, affinity FROM Promoters
-	        			JOIN PromoterSequences USING(pID)
-	        			JOIN BarcodeCounts USING(sID)
-	        			JOIN Experiments USING (eID)
-	        			JOIN BindingSitesRNAP using(sID)
-	        			LEFT JOIN BindingSitesTF USING(sID)
-	        			JOIN TranscriptionFactors USING(tID)
-	        		WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
-	        			AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-	        			AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s);
-	        		"""
-        else:
-	        query = """
-	        		SELECT sID, num_DNA, num_RNA, affinity FROM Promoters
-	        			JOIN PromoterSequences USING(pID)
-	        			JOIN BarcodeCounts USING(sID)
-	        			JOIN Experiments USING (eID)
-	        			JOIN BindingSitesTF USING(sID)
-	        			JOIN TranscriptionFactors USING(tID)
-	        		WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
-	        			AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-	        			AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s);
-	        		"""
+					SELECT sID, num_DNA, num_RNA, affinity FROM Promoters
+						JOIN PromoterSequences USING(pID)
+						JOIN BarcodeCounts USING(sID)
+						JOIN Experiments USING (eID)
+						JOIN BindingSitesRNAP using(sID)
+						LEFT JOIN BindingSitesTF USING(sID)
+						JOIN TranscriptionFactors USING(tID)
+					WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
+						AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
+						AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s);
+					"""
+		else:
+			query = """
+					SELECT sID, num_DNA, num_RNA, affinity FROM Promoters
+						JOIN PromoterSequences USING(pID)
+						JOIN BarcodeCounts USING(sID)
+						JOIN Experiments USING (eID)
+						JOIN BindingSitesTF USING(sID)
+						JOIN TranscriptionFactors USING(tID)
+					WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
+						AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
+						AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s);
+					"""
 
-        # Submit Query
-        results = self.__query(query, inputs)
+		# Submit Query
+		results = self.__query(query, inputs)
 		return results
