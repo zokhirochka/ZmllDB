@@ -81,11 +81,12 @@ class RegSeqDB:
 		inputs = [promoter, condition]
 		query = """
 				SELECT sID, num_DNA, num_RNA FROM Promoters
-					JOIN PromoterSequences USING(pID)
+					JOIN PromoterSequences AS ps USING(pID)
 					JOIN BarcodeCounts USING(sID)
 					JOIN Experiments USING (eID)
 				WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s) AND 
-					  eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1);
+					  eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
+				GROUP BY ps.seq;
 				"""
 
 		# Submit Query
@@ -123,7 +124,7 @@ class RegSeqDB:
 		if include_rnap:
 			query = """
 					SELECT sID, num_DNA, num_RNA, energy, affinity FROM Promoters
-						JOIN PromoterSequences USING(pID)
+						JOIN PromoterSequences AS ps USING(pID)
 						JOIN BarcodeCounts USING(sID)
 						JOIN Experiments USING (eID)
 						JOIN BindingSitesRNAP using(sID)
@@ -131,21 +132,24 @@ class RegSeqDB:
 						JOIN TranscriptionFactors USING(tID)
 					WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
 						AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-						AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s);
+						AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s)
+					GROUP BY ps.seq;
 					"""
 		else:
 			query = """
-					SELECT sID, num_DNA, num_RNA, affinity FROM Promoters
-						JOIN PromoterSequences USING(pID)
+					SELECT sID, SUM(num_DNA) as num_DNA, SUM(num_RNA) as num_RNA, affinity FROM Promoters
+						JOIN PromoterSequences AS ps USING(pID)
 						JOIN BarcodeCounts USING(sID)
 						JOIN Experiments USING (eID)
 						JOIN BindingSitesTF USING(sID)
 						JOIN TranscriptionFactors USING(tID)
 					WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
 						AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-						AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s);
+						AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s)
+					GROUP BY ps.seq;
 					"""
 
 		# Submit Query
 		results = self.__query(query, inputs)
 		return results
+
