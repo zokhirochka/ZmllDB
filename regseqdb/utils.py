@@ -71,8 +71,8 @@ def db_contains(cursor, table, column, value):
         Returns:
             True or False based on value presence
         """
-        inputs = [table, column, value]
-        query = "SELECT * FROM %s WHERE %s = %s;"
+        inputs = [value]
+        query = f"SELECT * FROM {table} WHERE {column} = %s;"
         results = exec_query(cursor=cursor, query=query, inputs=inputs)
         if not results:
                 return False
