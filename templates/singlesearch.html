@@ -1,37 +1,64 @@
 <html>
     <head>
-        <style>
-
-        </style>
+        <title>RegSeqDB — Single Promoter Search</title>
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+        <link rel="stylesheet" href="style.css">
     </head>
-
 
     <body>
         <nav class="navbar">
-            <ul>
+            <div class="navbar-inner">
+                <a class="logo" href="defaultpage.html">
+                    Reg<span>Seq</span>DB
+                </a>
+            <ul class="nav-links">
                 <!--these let you click on other pages--> 
-                <li><a href="about.html">About</a></li>
-                <li><a href="help.html">Help</a></li>
+                <li><a href="about.html">Information</a></li>
+                <li><a href="help.html">Help</a></li> 
                 <li><a href="defaultpage.html">Home</a></li>
-                <li><a href="comparison.html">Comparison</a></li>
+                <li><a href="singlesearch.html" class="active">Single Promoter Search</a></li>
+                <li><a href="comparison.html">Compare Between Conditions</a></li>
             </ul>
         </nav>
 
+        <!--Page Header-->
+        <div class="page-header">
+            <h1>Single Promoter Search</h1>
+            <p>Look up a promoter by name or transcription factor and retrieve
+                the sequence and the predicted expression and binding energy data 
+                across experimental conditions.</p>
+        </div>
+
+        <section class="search-panel">
         <form name="singlesearch" action="http://127.0.0.1:5000/" method="GET">
+
+            <!--row 1: promoter and transcription factor-->
+            <div class="form-row">
             <!--Textbox for promoter-->
+            <div class="form-group">
             <label for="promoter_name">Promoter Name:</label>
             <input type="text" name="promoter_name" id="promoter_name" 
                 placeholder="ex: blrp"> 
-                <br>                
+            </div>
+                               
                  
             <!--Textbox for Transcription factor-->
+            <div class="form-group">
             <label for="TF_name">Transcription Factor:</label>
             <input type="text" name="TF_name" id="TF_name" 
                 placeholder="ex: YeiE">
-                <br> 
+            </div>
 
+            </div> 
+
+            <!--row 2: Conditions-->
+            <div class="form-group full-width">
             <!--Dropdown menu for Condition-->
-            <!--question for me, does the value= have to be equal to how they appear in the database-->
+            <!--change the value='' to what is exactly in the database-->
             <label for="Condition">Condition:</label>
     			<select name="Condition" id="Condition">
         		     <option value="Glucose"> Glucose </option>
@@ -74,11 +101,48 @@
                      <option value="Low Osmolarity"> Low Osmolarity </option>
                      <option value="Low Phosphate"> Low Phosphate </option>
      			</select>
+                </div>
 
             <!-- Submit Button-->
-			<input type="button" value="Search">
-
+			<div class="submit-container">
+			<input type="submit" value="Search">
+            </div>
         </form>
+        </section>
+        
+        <section class="results-summary">
+        <!--graphs go here-->
+        </section>
+
+        <section class="table-section">
+        <!--table information-->
+        <table>
+            <thead>
+                <tr>
+                    <th>sID</th>
+                    <th>Sequence</th>
+                    <th>Expression</th>
+                    <th>TF Energy</th>
+                    <th>RNAP Energy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.sID }}</td>
+                    <td class="seq-cell">{{ row.Sequence }}</td>
+                    <td>{{ row.Expression }}</td>
+                    <td>{{ row.TF_Energy }}</td>
+                    <td>{{ row.RNAP_Energy }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </section>
+
+        <section class="genomic-locus">
+        <!--genomic locus-->
+        </section>
 
     </body>
 </html>

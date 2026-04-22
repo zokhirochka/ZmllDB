@@ -1,36 +1,40 @@
 <html>
     <head>
-        <title>
-            Zmlldb
-        </title>
-        <style>
-            h1 {
-                text-align: center;
-                padding-top: 155px;
-                font-family: Garamond, serif;
-            }
-            #p1 {
-                text-align: center;
-                padding-top: 5px;
-                font-family: Garamond, serif;
-            }
-        </style>
+        <title>RegSeqDB</title>
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+        <link rel="stylesheet" href="style.css">
     </head>
 
     <body>
-
         <nav class="navbar">
-            <ul>
+            <div class="navbar-inner">
+                <a class="logo" href="defaultpage.html">
+                    Reg<span>Seq</span>DB
+                </a>
+            <ul class="nav-links">
                 <!--these let you click on other pages--> 
-                <li><a href="about.html">About</a></li>
-                <li><a href="help.html">Help</a></li>
-                <li><a href="singlesearch.html">Single search</a></li>
-                <li><a href="comparison.html">Comparison</a></li>
+                <li><a href="about.html">Information</a></li>
+                <li><a href="help.html">Help</a></li> 
+                <li><a href="defaultpage.html">Home</a></li>
+                <li><a href="singlesearch.html" class="active">Single search</a></li>
+                <li><a href="comparison.html">Compare Between Conditions</a></li>
             </ul>
-        </nav> 
+        </nav>
 
-        <h1 id="h1" class="h1">THE Database</h1>
-        <p id="p1" class="p1"> Maybe we can add a little bit of information here or something</p>
+        <h1 id="defaultpageh1" class="h1">RegseqDB</h1>
+        <p id="underTitle" class="p1">
+            A database for exploring promoter mutations, gene expression, and 
+            transcription factor binding in E. coli across experimental conditions.
+        </p>
+
+        <div class="buttons">
+            <a href="singlesearch.html" class="btn">Single Promoter Search</a>
+            <a href="comparison.html" class="btn">Compare Conditions</a>
+        </div>
         
     </body>
 </html>

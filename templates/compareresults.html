@@ -1,21 +1,120 @@
 <html>
     <head>
-
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
+        <link rel="stylesheet" href="style.css">
     </head>
 
     <body>
         <nav class="navbar">
             <ul>
                 <!--these let you click on other pages--> 
-                <li><a href="singlesearch.html">Single search</a></li>
-                <li><a href="help.html">Help</a></li>
-                <li><a href="about.html">About</a></li>
+                <li><a href="about.html">Information</a></li>
+                <li><a href="help.html">Help</a></li> 
                 <li><a href="defaultpage.html">Home</a></li>
+                <li><a href="singlesearch.html">Single search</a></li>
+                <li><a href="comparison.html">Compare Between Conditions</a></li>
             </ul>
         </nav>
 
-        <!--do we really want the form to stay at the top or do we just want hte tablae and figuer maybe both lkets do both x-->
+        <form name="singlesearch" action="http://127.0.0.1:5000/" method="GET">
+            <!--Textbox for promoter 1-->
+            <label for="promoter_name1">First Promoter Name:</label>
+            <input type="text" name="promoter_name1" id="promoter_name1" 
+                placeholder="ex: blrp">   
+                
+            <!--Textbox for promoter 2-->
+            <label for="promoter_name2">Second Promoter Name:</label>
+            <input type="text" name="promoter_name2" id="promoter_name2" 
+                placeholder="ex: xylFp"> 
+                <br> 
+                 
+            <!--Textbox for Transcription factor 1-->
+            <label for="TF_name1">First Transcription Factor:</label>
+            <input type="text" name="TF_name1" id="TF_name1" 
+                placeholder="ex: YeiE"> 
+            
+            <!--Textbox for Transcription factor 2-->
+            <label for="TF_name2">Second Transcription Factor:</label>
+            <input type="text" name="TF_name2" id="TF_name2" 
+                placeholder="ex: ArgR">
+                <br>
 
+            <!--Dropdown menu for Condition-->
+            <!--question for me, does the value= have to be equal to how they appear in the database-->
+            <label for="Condition">Condition to compare on:</label>
+    			<select name="Condition" id="Condition">
+        		     <option value="Glucose"> Glucose </option>
+         		     <option value="Xylose"> Xylose </option>
+         		     <option value="Arabinose"> Arabinose </option>
+			         <option value="Galactose"> Galactose </option>
+                     <option value="Acetate"> Acetate </option>
+                     <option value="Nitrate"> Nitrate </option>
+                     <option value="Sodium Salicytate"> Sodium Salicytate </option>
+                     <option value="Sodium Salicytate (induction)"> Sodium Salicytate (induction) </option>
+                     <option value="Phenazine Methosulfate"> Phenazine Methosulfate </option>
+                     <option value="HCl (pH=2)"> HCl (pH=2) </option>
+                     <option value="Ethanol 2.5%"> Ethanol 2.5% </option>
+                     <option value="Stationary Phase (1d)"> Stationary Phase (1d) </option>
+                     <option value="Stationary Phase (3d)"> Stationary Phase (3d) </option>
+                     <option value="Cold Shock (1hr at 10C)"> Cold Shock (1hr at 10C) </option>
+                     <option value="Medium Cold Shock (1hr at 19C)"> Medium Cold Shock (1hr at 19C) </option>
+                     <option value="Heat Shock"> Heat Shock </option>
+                     <option value="Ampicillin"> Ampicillin </option>
+                     <option value="Gentamicin"> Gentamicin </option>
+                     <option value="Ampicillin (induction)"> Ampicillin (induction) </option>
+                     <option value="H2O2 (0.1mM, 30min)"> H2O2 (0.1mM, 30min) </option>
+                     <option value="H2O2 (2.5mM, 10min)"> H2O2 (2.5mM, 10min) </option>
+                     <option value="copper sulfate (500ÂµM)"> Copper Sulfate (500 µM) </option>
+                     <option value="Copper Sulfate (2mM)"> Copper Sulfate (2mM) </option>
+                     <option value="HOCl (4mM)"> HOCl (4mM) </option>
+                     <option value="LB"> LB </option>
+                     <option value="LB + 0.75M NaCl"> LB + 0.75M NaCl </option>
+                     <option value="Nitrogen Starvation"> Nitrogen Starvation </option>
+                     <option value="Magnesium Starvation"> Magnesium Starvation </option>
+                     <option value="Sulfur Starvation"> Sulfur Starvation </option>
+                     <option value="Ethanol (induction)"> Ethanol (induction) </option>
+                     <option value="Glutamic Acid (pH=2.5)"> Glutamic Acid (pH=2.5) </option>
+                     <option value="Leucine 10 mM"> Leucine 10 mM </option>
+                     <option value="2,2-Dipyridyl"> 2,2-Dipyridyl </option>
+                     <option value="Spermidine"> Spermidine </option>
+                     <option value="Serine Hydroxamate"> Serine Hydroxamate </option>
+                     <option value="Anaerobic"> Anaerobic </option>
+                     <option value="Anaerobic + Nitrate"> Anaerobic + Nitrate </option>
+                     <option value="Low Osmolarity"> Low Osmolarity </option>
+                     <option value="Low Phosphate"> Low Phosphate </option>
+     			</select>
+
+            <!-- Submit Button-->
+			<input type="button" value="Search">
+        </form>
+
+        <!--input the graph, this one should be one, before the table with information below it-->
+
+
+        <!--here is the table-->
+        <table>
+            <thead>
+                <tr>
+                    <th>sID</th>
+                    <th>Sequence</th>
+                    <th>Expression</th>
+                    <th>TF Energy</th>
+                    <th>RNAP Energy</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.name }}</td>
+                    <td>{{ row.age }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+
+
+        <!--link the sequence visualization-->
 
 
     </body>
