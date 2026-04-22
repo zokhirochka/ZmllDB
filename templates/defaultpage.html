@@ -1,27 +1,27 @@
 <html>
     <head>
-        <title>RegSeqDB</title>
+        <title>RegSeqDB — Compare Search</title>
         <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-        <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     </head>
 
     <body>
         <nav class="navbar">
             <div class="navbar-inner">
-                <a class="logo" href="defaultpage.html">
+                <a class="logo" href="{{ url_for('home') }}">
                     Reg<span>Seq</span>DB
                 </a>
+            </div>    
             <ul class="nav-links">
                 <!--these let you click on other pages--> 
-                <li><a href="about.html">Information</a></li>
-                <li><a href="help.html">Help</a></li> 
-                <li><a href="defaultpage.html">Home</a></li>
-                <li><a href="singlesearch.html" class="active">Single search</a></li>
-                <li><a href="comparison.html">Compare Between Conditions</a></li>
+                <li><a href="{{ url_for('about') }}">Information</a></li>
+                <li><a href="{{ url_for('help_page') }}">Help</a></li> 
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('singlesearch') }}">Single search</a></li>
+                <li><a href="{{ url_for('comparison') }}">Compare Between Conditions</a></li>
             </ul>
         </nav>
 
@@ -32,8 +32,8 @@
         </p>
 
         <div class="buttons">
-            <a href="singlesearch.html" class="btn">Single Promoter Search</a>
-            <a href="comparison.html" class="btn">Compare Conditions</a>
+            <a href="{{ url_for('singlesearch') }}" class="btn">Single Promoter Search</a>
+            <a href="{{ url_for('comparison') }}" class="btn">Compare Conditions</a>
         </div>
         
     </body>
