@@ -395,3 +395,80 @@ tbody td {
   background-color: #1e4ed8;
 }
 
+/* ── Comparison Results ─────────────────────────────── */
+.results-section {
+    max-width: 1100px;
+    margin: 28px auto;
+    padding: 0 32px;
+}
+
+.results-meta {
+    margin-bottom: 1.5rem;
+    font-size: 14px;
+    color: var(--text2);
+}
+
+.results-meta strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.rowcount {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+}
+
+.cond-badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: var(--amber-light);
+    color: var(--amber);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+}
+
+.chart-card--wide {
+    grid-column: 1 / -1;
+}
+
+.error-banner {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    text-align: center;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    font-size: 14px;
+}
+
+.no-results {
+    max-width: 700px;
+    margin: 2rem auto;
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius);
+    text-align: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 14px;
+}

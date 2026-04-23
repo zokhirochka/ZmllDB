@@ -2,14 +2,12 @@
 <head>
     <title>RegSeqDB — Comparison Search</title>
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
-    <script src="https://code.jquery.com/jquery-4.0.0.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
     <style>
-        /* ── Results section styles ── */
         .results-section {
             max-width: 1100px;
             margin: 28px auto;
@@ -51,8 +49,6 @@
             font-family: var(--mono);
         }
         .pill strong { color: var(--amber); font-weight: 600; }
-        .pill.p1 strong { color: #0099cc; }
-        .pill.p2 strong { color: #c0392b; }
 
         .plot-grid {
             display: grid;
@@ -61,7 +57,6 @@
             margin-bottom: 1.5rem;
         }
         .plot-card-full { grid-column: 1 / -1; }
-
         .plot-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -88,8 +83,8 @@
             color: var(--text3);
             font-family: var(--mono);
         }
-        .plot-container { width: 100%; height: 400px; }
-        .plot-card-full .plot-container { height: 440px; }
+        .plot-container { width: 100%; height: 380px; }
+        .plot-card-full .plot-container { height: 420px; }
 
         .no-data {
             display: flex;
@@ -102,7 +97,6 @@
             gap: 0.5rem;
             font-family: var(--mono);
         }
-
         .section-title {
             font-family: var(--sans);
             font-size: 11px;
@@ -114,18 +108,6 @@
             padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--border);
         }
-
-        .color-legend {
-            display: flex;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            font-family: var(--mono);
-            font-size: 0.76rem;
-            color: var(--text2);
-        }
-        .color-legend span { display: flex; align-items: center; gap: 0.4rem; }
-        .color-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-
         .error-msg {
             background: #fef2f2;
             border: 1px solid #fecaca;
@@ -135,6 +117,18 @@
             font-family: var(--mono);
             font-size: 0.8rem;
             margin-bottom: 1rem;
+        }
+        .no-results {
+            max-width: 700px;
+            margin: 2rem auto;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            text-align: center;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text3);
+            font-size: 14px;
+            font-family: var(--mono);
         }
 
         @media (max-width: 900px) {
@@ -147,14 +141,12 @@
 <body>
     <nav class="navbar">
         <div class="navbar-inner">
-            <a class="logo" href="{{ url_for('home') }}">
-                Reg<span>Seq</span>DB
-            </a>
+            <a class="logo" href="{{ url_for('home') }}">Reg<span>Seq</span>DB</a>
             <ul class="nav-links">
                 <li><a href="{{ url_for('about') }}">Information</a></li>
                 <li><a href="{{ url_for('help_page') }}">Help</a></li>
                 <li><a href="{{ url_for('home') }}">Home</a></li>
-                <li><a href="{{ url_for('singlesearch') }}">Single search</a></li>
+                <li><a href="{{ url_for('singlesearch') }}">Single Search</a></li>
                 <li><a href="{{ url_for('comparison') }}">Compare Between Conditions</a></li>
             </ul>
         </div>
@@ -162,13 +154,12 @@
 
     <div class="page-header">
         <h1>Compare Across Conditions</h1>
-        <p>Look up a promoter by name or transcription factor and retrieve sequence,
-         expression, and binding energy data across experimental conditions.</p>
+        <p>Look up a promoter and transcription factor and compare its expression
+         and binding data across two different experimental conditions.</p>
     </div>
 
     <section class="search-panel">
-    <form name="comparison" action="{{ url_for('compare') }}" method="GET">
-        
+    <form name="comparisonsearch" action="{{ url_for('compare') }}" method="GET">
 
         {% if error %}
         <div class="error-msg">⚠ {{ error }}</div>
@@ -176,187 +167,264 @@
 
         <div class="form-row">
             <div class="form-group">
-                <label for="promoter_name1">First Promoter Name:</label>
-                <input type="text" name="promoter_name1" id="promoter_name1"
-                    placeholder="ex: blrp"
-                    value="{{ promoter1 or '' }}">
+                <label for="promoter_name">Promoter Name:</label>
+                <input type="text" name="promoter_name" id="promoter_name"
+                       placeholder="ex: tisBp" value="{{ promoter_name or '' }}">
             </div>
             <div class="form-group">
-                <label for="promoter_name2">Second Promoter Name:</label>
-                <input type="text" name="promoter_name2" id="promoter_name2"
-                    placeholder="ex: xylFp"
-                    value="{{ promoter2 or '' }}">
+                <label for="TF_name">Transcription Factor:</label>
+                <input type="text" name="TF_name" id="TF_name"
+                       placeholder="ex: LexA" value="{{ tf_name or '' }}">
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group">
-                <label for="TF_name1">First Transcription Factor:</label>
-                <input type="text" name="TF_name1" id="TF_name1"
-                    placeholder="ex: YeiE"
-                    value="{{ tf1 or '' }}">
+                <label for="Condition1">First Condition:</label>
+                <select name="Condition1" id="Condition1">
+                    <option value="glucose"                        {% if condition1 == 'glucose'                        %}selected{% endif %}> Glucose </option>
+                    <option value="xylose"                         {% if condition1 == 'xylose'                         %}selected{% endif %}> Xylose </option>
+                    <option value="arabinose"                      {% if condition1 == 'arabinose'                      %}selected{% endif %}> Arabinose </option>
+                    <option value="galactose"                      {% if condition1 == 'galactose'                      %}selected{% endif %}> Galactose </option>
+                    <option value="acetate"                        {% if condition1 == 'acetate'                        %}selected{% endif %}> Acetate </option>
+                    <option value="nitrate"                        {% if condition1 == 'nitrate'                        %}selected{% endif %}> Nitrate </option>
+                    <option value="sodium salicytate"              {% if condition1 == 'sodium salicytate'              %}selected{% endif %}> Sodium Salicytate </option>
+                    <option value="sodium salicytate (induction)"  {% if condition1 == 'sodium salicytate (induction)'  %}selected{% endif %}> Sodium Salicytate (induction) </option>
+                    <option value="phenazine methosulfate"         {% if condition1 == 'phenazine methosulfate'         %}selected{% endif %}> Phenazine Methosulfate </option>
+                    <option value="pH 2 (HCl)"                    {% if condition1 == 'pH 2 (HCl)'                    %}selected{% endif %}> HCl (pH=2) </option>
+                    <option value="ethanol (2.5%)"                 {% if condition1 == 'ethanol (2.5%)'                 %}selected{% endif %}> Ethanol 2.5% </option>
+                    <option value="stationary phase (1d)"          {% if condition1 == 'stationary phase (1d)'          %}selected{% endif %}> Stationary Phase (1d) </option>
+                    <option value="stationary phase (3d)"          {% if condition1 == 'stationary phase (3d)'          %}selected{% endif %}> Stationary Phase (3d) </option>
+                    <option value="cold shock (1h at 10 C)"        {% if condition1 == 'cold shock (1h at 10 C)'        %}selected{% endif %}> Cold Shock (1hr at 10C) </option>
+                    <option value="medium cold shock (1h at 19 C)" {% if condition1 == 'medium cold shock (1h at 19 C)' %}selected{% endif %}> Medium Cold Shock (1hr at 19C) </option>
+                    <option value="heat shock"                     {% if condition1 == 'heat shock'                     %}selected{% endif %}> Heat Shock </option>
+                    <option value="ampicillin"                     {% if condition1 == 'ampicillin'                     %}selected{% endif %}> Ampicillin </option>
+                    <option value="gentamicin"                     {% if condition1 == 'gentamicin'                     %}selected{% endif %}> Gentamicin </option>
+                    <option value="ampicillin (induction)"         {% if condition1 == 'ampicillin (induction)'         %}selected{% endif %}> Ampicillin (induction) </option>
+                    <option value="H2O2 (0.1mM, 30min)"           {% if condition1 == 'H2O2 (0.1mM, 30min)'           %}selected{% endif %}> H2O2 (0.1mM) </option>
+                    <option value="H2O2 (2.5mM, 10min)"           {% if condition1 == 'H2O2 (2.5mM, 10min)'           %}selected{% endif %}> H2O2 (2.5mM) </option>
+                    <option value="copper sulfate (500ÂµM)"        {% if condition1 == 'copper sulfate (500ÂµM)'        %}selected{% endif %}> Copper Sulfate (500 µM) </option>
+                    <option value="copper sulfate (2mM)"           {% if condition1 == 'copper sulfate (2mM)'           %}selected{% endif %}> Copper Sulfate (2mM) </option>
+                    <option value="HOCl (4mM)"                    {% if condition1 == 'HOCl (4mM)'                    %}selected{% endif %}> HOCl (4mM) </option>
+                    <option value="LB"                             {% if condition1 == 'LB'                             %}selected{% endif %}> LB </option>
+                    <option value="LB + 0.75M NaCl"               {% if condition1 == 'LB + 0.75M NaCl'               %}selected{% endif %}> LB + 0.75M NaCl </option>
+                    <option value="nitrogen starvation"            {% if condition1 == 'nitrogen starvation'            %}selected{% endif %}> Nitrogen Starvation </option>
+                    <option value="magnesium starvation"           {% if condition1 == 'magnesium starvation'           %}selected{% endif %}> Magnesium Starvation </option>
+                    <option value="sulphur starvation"             {% if condition1 == 'sulphur starvation'             %}selected{% endif %}> Sulfur Starvation </option>
+                    <option value="ethanol (induction)"            {% if condition1 == 'ethanol (induction)'            %}selected{% endif %}> Ethanol (induction) </option>
+                    <option value="glutamic acid (pH 2.5)"         {% if condition1 == 'glutamic acid (pH 2.5)'         %}selected{% endif %}> Glutamic Acid (pH=2.5) </option>
+                    <option value="leucine (10mM)"                 {% if condition1 == 'leucine (10mM)'                 %}selected{% endif %}> Leucine 10 mM </option>
+                    <option value="2,2-Dipyridyl"                  {% if condition1 == '2,2-Dipyridyl'                  %}selected{% endif %}> 2,2-Dipyridyl </option>
+                    <option value="spermidine"                     {% if condition1 == 'spermidine'                     %}selected{% endif %}> Spermidine </option>
+                    <option value="serine hydroxamate"             {% if condition1 == 'serine hydroxamate'             %}selected{% endif %}> Serine Hydroxamate </option>
+                    <option value="anaerobic"                      {% if condition1 == 'anaerobic'                      %}selected{% endif %}> Anaerobic </option>
+                    <option value="anaerobic + nitrate"            {% if condition1 == 'anaerobic + nitrate'            %}selected{% endif %}> Anaerobic + Nitrate </option>
+                    <option value="low osmolarity"                 {% if condition1 == 'low osmolarity'                 %}selected{% endif %}> Low Osmolarity </option>
+                    <option value="low phosphate"                  {% if condition1 == 'low phosphate'                  %}selected{% endif %}> Low Phosphate </option>
+                </select>
             </div>
             <div class="form-group">
-                <label for="TF_name2">Second Transcription Factor:</label>
-                <input type="text" name="TF_name2" id="TF_name2"
-                    placeholder="ex: ArgR"
-                    value="{{ tf2 or '' }}">
+                <label for="Condition2">Second Condition:</label>
+                <select name="Condition2" id="Condition2">
+                    <option value="glucose"                        {% if condition2 == 'glucose'                        %}selected{% endif %}> Glucose </option>
+                    <option value="xylose"                         {% if condition2 == 'xylose'                         %}selected{% endif %}> Xylose </option>
+                    <option value="arabinose"                      {% if condition2 == 'arabinose'                      %}selected{% endif %}> Arabinose </option>
+                    <option value="galactose"                      {% if condition2 == 'galactose'                      %}selected{% endif %}> Galactose </option>
+                    <option value="acetate"                        {% if condition2 == 'acetate'                        %}selected{% endif %}> Acetate </option>
+                    <option value="nitrate"                        {% if condition2 == 'nitrate'                        %}selected{% endif %}> Nitrate </option>
+                    <option value="sodium salicytate"              {% if condition2 == 'sodium salicytate'              %}selected{% endif %}> Sodium Salicytate </option>
+                    <option value="sodium salicytate (induction)"  {% if condition2 == 'sodium salicytate (induction)'  %}selected{% endif %}> Sodium Salicytate (induction) </option>
+                    <option value="phenazine methosulfate"         {% if condition2 == 'phenazine methosulfate'         %}selected{% endif %}> Phenazine Methosulfate </option>
+                    <option value="pH 2 (HCl)"                    {% if condition2 == 'pH 2 (HCl)'                    %}selected{% endif %}> HCl (pH=2) </option>
+                    <option value="ethanol (2.5%)"                 {% if condition2 == 'ethanol (2.5%)'                 %}selected{% endif %}> Ethanol 2.5% </option>
+                    <option value="stationary phase (1d)"          {% if condition2 == 'stationary phase (1d)'          %}selected{% endif %}> Stationary Phase (1d) </option>
+                    <option value="stationary phase (3d)"          {% if condition2 == 'stationary phase (3d)'          %}selected{% endif %}> Stationary Phase (3d) </option>
+                    <option value="cold shock (1h at 10 C)"        {% if condition2 == 'cold shock (1h at 10 C)'        %}selected{% endif %}> Cold Shock (1hr at 10C) </option>
+                    <option value="medium cold shock (1h at 19 C)" {% if condition2 == 'medium cold shock (1h at 19 C)' %}selected{% endif %}> Medium Cold Shock (1hr at 19C) </option>
+                    <option value="heat shock"                     {% if condition2 == 'heat shock'                     %}selected{% endif %}> Heat Shock </option>
+                    <option value="ampicillin"                     {% if condition2 == 'ampicillin'                     %}selected{% endif %}> Ampicillin </option>
+                    <option value="gentamicin"                     {% if condition2 == 'gentamicin'                     %}selected{% endif %}> Gentamicin </option>
+                    <option value="ampicillin (induction)"         {% if condition2 == 'ampicillin (induction)'         %}selected{% endif %}> Ampicillin (induction) </option>
+                    <option value="H2O2 (0.1mM, 30min)"           {% if condition2 == 'H2O2 (0.1mM, 30min)'           %}selected{% endif %}> H2O2 (0.1mM) </option>
+                    <option value="H2O2 (2.5mM, 10min)"           {% if condition2 == 'H2O2 (2.5mM, 10min)'           %}selected{% endif %}> H2O2 (2.5mM) </option>
+                    <option value="copper sulfate (500ÂµM)"        {% if condition2 == 'copper sulfate (500ÂµM)'        %}selected{% endif %}> Copper Sulfate (500 µM) </option>
+                    <option value="copper sulfate (2mM)"           {% if condition2 == 'copper sulfate (2mM)'           %}selected{% endif %}> Copper Sulfate (2mM) </option>
+                    <option value="HOCl (4mM)"                    {% if condition2 == 'HOCl (4mM)'                    %}selected{% endif %}> HOCl (4mM) </option>
+                    <option value="LB"                             {% if condition2 == 'LB'                             %}selected{% endif %}> LB </option>
+                    <option value="LB + 0.75M NaCl"               {% if condition2 == 'LB + 0.75M NaCl'               %}selected{% endif %}> LB + 0.75M NaCl </option>
+                    <option value="nitrogen starvation"            {% if condition2 == 'nitrogen starvation'            %}selected{% endif %}> Nitrogen Starvation </option>
+                    <option value="magnesium starvation"           {% if condition2 == 'magnesium starvation'           %}selected{% endif %}> Magnesium Starvation </option>
+                    <option value="sulphur starvation"             {% if condition2 == 'sulphur starvation'             %}selected{% endif %}> Sulfur Starvation </option>
+                    <option value="ethanol (induction)"            {% if condition2 == 'ethanol (induction)'            %}selected{% endif %}> Ethanol (induction) </option>
+                    <option value="glutamic acid (pH 2.5)"         {% if condition2 == 'glutamic acid (pH 2.5)'         %}selected{% endif %}> Glutamic Acid (pH=2.5) </option>
+                    <option value="leucine (10mM)"                 {% if condition2 == 'leucine (10mM)'                 %}selected{% endif %}> Leucine 10 mM </option>
+                    <option value="2,2-Dipyridyl"                  {% if condition2 == '2,2-Dipyridyl'                  %}selected{% endif %}> 2,2-Dipyridyl </option>
+                    <option value="spermidine"                     {% if condition2 == 'spermidine'                     %}selected{% endif %}> Spermidine </option>
+                    <option value="serine hydroxamate"             {% if condition2 == 'serine hydroxamate'             %}selected{% endif %}> Serine Hydroxamate </option>
+                    <option value="anaerobic"                      {% if condition2 == 'anaerobic'                      %}selected{% endif %}> Anaerobic </option>
+                    <option value="anaerobic + nitrate"            {% if condition2 == 'anaerobic + nitrate'            %}selected{% endif %}> Anaerobic + Nitrate </option>
+                    <option value="low osmolarity"                 {% if condition2 == 'low osmolarity'                 %}selected{% endif %}> Low Osmolarity </option>
+                    <option value="low phosphate"                  {% if condition2 == 'low phosphate'                  %}selected{% endif %}> Low Phosphate </option>
+                </select>
             </div>
-        </div>
-
-        <div class="form-group full-width">
-        <label for="Condition">Condition to compare on:</label>
-            <select name="Condition" id="Condition">
-                 <option value="glucose" {% if condition == 'glucose' %}selected{% endif %}> Glucose </option>
-                 <option value="xylose" {% if condition == 'xylose' %}selected{% endif %}> Xylose </option>
-                 <option value="arabinose" {% if condition == 'arabinose' %}selected{% endif %}> Arabinose </option>
-                 <option value="galactose" {% if condition == 'galactose' %}selected{% endif %}> Galactose </option>
-                 <option value="acetate" {% if condition == 'acetate' %}selected{% endif %}> Acetate </option>
-                 <option value="nitrate" {% if condition == 'nitrate' %}selected{% endif %}> Nitrate </option>
-                 <option value="sodium salicytate" {% if condition == 'sodium salicytate' %}selected{% endif %}> Sodium Salicytate </option>
-                 <option value="sodium salicytate (induction)" {% if condition == 'sodium salicytate (induction)' %}selected{% endif %}> Sodium Salicytate (induction) </option>
-                 <option value="phenazine methosulfate" {% if condition == 'phenazine methosulfate' %}selected{% endif %}> Phenazine Methosulfate </option>
-                 <option value="pH 2 (HCl)" {% if condition == 'pH 2 (HCl)' %}selected{% endif %}> HCl (pH=2) </option>
-                 <option value="ethanol (2.5%)" {% if condition == 'ethanol (2.5%)' %}selected{% endif %}> Ethanol 2.5% </option>
-                 <option value="stationary phase (1d)" {% if condition == 'stationary phase (1d)' %}selected{% endif %}> Stationary Phase (1d) </option>
-                 <option value="stationary phase (3d)" {% if condition == 'stationary phase (3d)' %}selected{% endif %}> Stationary Phase (3d) </option>
-                 <option value="cold shock (1h at 10 C)" {% if condition == 'cold shock (1h at 10 C)' %}selected{% endif %}> Cold Shock (1hr at 10C) </option>
-                 <option value="medium cold shock (1h at 19 C)" {% if condition == 'medium cold shock (1h at 19 C)' %}selected{% endif %}> Medium Cold Shock (1hr at 19C) </option>
-                 <option value="heat shock" {% if condition == 'heat shock' %}selected{% endif %}> Heat Shock </option>
-                 <option value="ampicillin" {% if condition == 'ampicillin' %}selected{% endif %}> Ampicillin </option>
-                 <option value="gentamicin" {% if condition == 'gentamicin' %}selected{% endif %}> Gentamicin </option>
-                 <option value="ampicillin (induction)" {% if condition == 'ampicillin (induction)' %}selected{% endif %}> Ampicillin (induction) </option>
-                 <option value="H2O2 (0.1mM, 30min)" {% if condition == 'H2O2 (0.1mM, 30min)' %}selected{% endif %}> H2O2 (0.1mM) </option>
-                 <option value="H2O2 (2.5mM, 10min)" {% if condition == 'H2O2 (2.5mM, 10min)' %}selected{% endif %}> H2O2 (2.5mM) </option>
-                 <option value="copper sulfate (500ÂµM)" {% if condition == 'copper sulfate (500ÂµM)' %}selected{% endif %}> Copper Sulfate (500 µM) </option>
-                 <option value="copper sulfate (2mM)" {% if condition == 'copper sulfate (2mM)' %}selected{% endif %}> Copper Sulfate (2mM) </option>
-                 <option value="HOCl (4mM)" {% if condition == 'HOCl (4mM)' %}selected{% endif %}> HOCl (4mM) </option>
-                 <option value="LB" {% if condition == 'LB' %}selected{% endif %}> LB </option>
-                 <option value="LB + 0.75M NaCl" {% if condition == 'LB + 0.75M NaCl' %}selected{% endif %}> LB + 0.75M NaCl </option>
-                 <option value="nitrogen starvation" {% if condition == 'nitrogen starvation' %}selected{% endif %}> Nitrogen Starvation </option>
-                 <option value="magnesium starvation" {% if condition == 'magnesium starvation' %}selected{% endif %}> Magnesium Starvation </option>
-                 <option value="sulphur starvation" {% if condition == 'sulphur starvation' %}selected{% endif %}> Sulfur Starvation </option>
-                 <option value="ethanol (induction)" {% if condition == 'ethanol (induction)' %}selected{% endif %}> Ethanol (induction) </option>
-                 <option value="glutamic acid (pH 2.5)" {% if condition == 'glutamic acid (pH 2.5)' %}selected{% endif %}> Glutamic Acid (pH=2.5) </option>
-                 <option value="leucine (10mM)" {% if condition == 'leucine (10mM)' %}selected{% endif %}> Leucine 10 mM </option>
-                 <option value="2,2-Dipyridyl" {% if condition == '2,2-Dipyridyl' %}selected{% endif %}> 2,2-Dipyridyl </option>
-                 <option value="spermidine" {% if condition == 'spermidine' %}selected{% endif %}> Spermidine </option>
-                 <option value="serine hydroxamate" {% if condition == 'serine hydroxamate' %}selected{% endif %}> Serine Hydroxamate </option>
-                 <option value="anaerobic" {% if condition == 'anaerobic' %}selected{% endif %}> Anaerobic </option>
-                 <option value="anaerobic + nitrate" {% if condition == 'anaerobic + nitrate' %}selected{% endif %}> Anaerobic + Nitrate </option>
-                 <option value="low osmolarity" {% if condition == 'low osmolarity' %}selected{% endif %}> Low Osmolarity </option>
-                 <option value="low phosphate" {% if condition == 'low phosphate' %}selected{% endif %}> Low Phosphate </option>
-            </select>
         </div>
 
         <div class="submit-container">
-            <input type="submit" value="Search">
+            <input type="submit" value="Compare">
         </div>
     </form>
     </section>
 
-    <!-- ══════════════════════════════════════
-         RESULTS — only shown after search
-    ══════════════════════════════════════ -->
-    {% if promoter1 and promoter2 and rowcount1 is defined %}
+    {% if promoter_name and rowcount1 is defined %}
     <div class="results-section">
 
         <div class="results-label">Comparison Results</div>
-        <div class="results-header">
-            <span>{{ promoter1 }}</span> vs. <span>{{ promoter2 }}</span>
-        </div>
+        <div class="results-header">Promoter: <span>{{ promoter_name }}</span></div>
 
         <div class="query-meta">
-            <div class="pill p1">Promoter 1 <strong>{{ promoter1 }}</strong></div>
-            <div class="pill p1">TF 1 <strong>{{ tf1 }}</strong></div>
-            <div class="pill p2">Promoter 2 <strong>{{ promoter2 }}</strong></div>
-            <div class="pill p2">TF 2 <strong>{{ tf2 }}</strong></div>
-            <div class="pill">Condition <strong>{{ condition }}</strong></div>
-            <div class="pill">P1 sequences <strong>{{ rowcount1 }}</strong></div>
-            <div class="pill">P2 sequences <strong>{{ rowcount2 }}</strong></div>
+            <div class="pill">Promoter <strong>{{ promoter_name }}</strong></div>
+            <div class="pill">TF <strong>{{ tf_name }}</strong></div>
+            <div class="pill">Condition 1 <strong>{{ condition1 }}</strong></div>
+            <div class="pill">Condition 2 <strong>{{ condition2 }}</strong></div>
+            <div class="pill">Sequences (cond 1) <strong>{{ rowcount1 }}</strong></div>
+            <div class="pill">Sequences (cond 2) <strong>{{ rowcount2 }}</strong></div>
         </div>
 
-        <div class="color-legend">
-            <span><span class="color-dot" style="background:#00bfff;"></span> {{ promoter1 }} (blue)</span>
-            <span><span class="color-dot" style="background:#f97066;"></span> {{ promoter2 }} (red)</span>
-        </div>
-
+        {% if graph_tf_expr %}
         <div class="section-title">Visualizations</div>
         <div class="plot-grid">
 
             <div class="plot-card">
                 <div class="plot-card-header">
                     <h3>TF Affinity vs. Expression</h3>
-                    <span class="plot-desc">RNA/DNA · log scale · overlaid</span>
+                    <span class="plot-desc">RNA/DNA · log scale · colored by condition</span>
                 </div>
-                {% if graph_compare_tf %}
-                    <div id="plot-compare-tf" class="plot-container"></div>
-                {% else %}
-                    <div class="no-data">No data available</div>
-                {% endif %}
+                <div id="plot-tf-expr" class="plot-container"></div>
             </div>
 
             <div class="plot-card">
                 <div class="plot-card-header">
                     <h3>RNAP Binding Energy vs. Expression</h3>
-                    <span class="plot-desc">RNA/DNA · log scale · overlaid</span>
+                    <span class="plot-desc">RNA/DNA · log scale · colored by condition</span>
                 </div>
-                {% if graph_compare_rnap %}
-                    <div id="plot-compare-rnap" class="plot-container"></div>
-                {% else %}
-                    <div class="no-data">No data available</div>
-                {% endif %}
+                <div id="plot-rnap-expr" class="plot-container"></div>
             </div>
 
             <div class="plot-card plot-card-full">
                 <div class="plot-card-header">
                     <h3>TF Affinity vs. RNAP Binding Energy</h3>
-                    <span class="plot-desc">Regulatory competition · overlaid</span>
+                    <span class="plot-desc">Regulatory competition · colored by condition</span>
                 </div>
-                {% if graph_compare_both %}
-                    <div id="plot-compare-both" class="plot-container"></div>
-                {% else %}
-                    <div class="no-data">No data available</div>
-                {% endif %}
+                <div id="plot-tf-rnap" class="plot-container"></div>
             </div>
 
         </div>
+        {% else %}
+        <div class="no-results">
+            No data found for <strong>{{ promoter_name }}</strong> with TF
+            <strong>{{ tf_name }}</strong> in either condition.
+        </div>
+        {% endif %}
+
     </div>
     {% endif %}
 
-    <!-- ── Plotly rendering ── -->
     <script>
-        function applyLightTheme(fig) {
+        // Two-color palette: one per condition
+        const COLORS = ["#1a6b50", "#b45309"];
+
+        function isDataTrace(t) {
+            return (t.type === 'scatter' || t.type === 'scattergl') && t.mode !== 'lines';
+        }
+
+        function decodeBase64Float64(bdata) {
+            const raw = atob(bdata);
+            const buf = new ArrayBuffer(raw.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i);
+            return Array.from(new Float64Array(buf));
+        }
+
+        function addLogRegressionLine(fig, traceIndex, color) {
+            const trace = fig.data[traceIndex];
+            if (!trace || !trace.x || !trace.y) return;
+
+            const x    = trace.x.bdata ? decodeBase64Float64(trace.x.bdata) : Array.from(trace.x);
+            const yRaw = trace.y.bdata ? decodeBase64Float64(trace.y.bdata) : Array.from(trace.y);
+            const y    = yRaw.map(v => v > 0 ? Math.log10(v) : null);
+            const pairs = x.map((xi, i) => [xi, y[i]]).filter(([, yi]) => yi !== null);
+            if (pairs.length < 2) return;
+
+            const n     = pairs.length;
+            const sumX  = pairs.reduce((a, [xi]) => a + xi, 0);
+            const sumY  = pairs.reduce((a, [, yi]) => a + yi, 0);
+            const sumXY = pairs.reduce((a, [xi, yi]) => a + xi * yi, 0);
+            const sumX2 = pairs.reduce((a, [xi]) => a + xi * xi, 0);
+            const slope     = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+
+            const xs = pairs.map(([xi]) => xi);
+            const xMin = Math.min(...xs), xMax = Math.max(...xs);
+
+            fig.data.push({
+                x: [xMin, xMax],
+                y: [Math.pow(10, slope * xMin + intercept), Math.pow(10, slope * xMax + intercept)],
+                type: 'scatter', mode: 'lines',
+                line: { color, width: 2, dash: 'dash' },
+                name: `OLS fit (${trace.name || ''})`,
+                showlegend: false,
+            });
+        }
+
+        function colorByCondition(fig) {
+            let colorIdx = 0;
+            fig.data.forEach(trace => {
+                if (isDataTrace(trace)) {
+                    trace.marker = trace.marker || {};
+                    trace.marker.color = COLORS[colorIdx % COLORS.length];
+                    colorIdx++;
+                }
+            });
+        }
+
+        function applyLayout(fig) {
             fig.layout.paper_bgcolor = "#ffffff";
             fig.layout.plot_bgcolor  = "#f7f6f2";
             fig.layout.font = { color: "#1c1a16", family: "JetBrains Mono, monospace", size: 12 };
         }
 
-        {% if graph_compare_tf %}
+        {% if graph_tf_expr %}
         (function() {
-            const fig = {{ graph_compare_tf | safe }};
+            const fig = {{ graph_tf_expr | safe }};
+            applyLayout(fig);
             fig.layout.yaxis = fig.layout.yaxis || {};
             fig.layout.yaxis.type = "log";
-            applyLightTheme(fig);
-            Plotly.react("plot-compare-tf", fig.data, fig.layout, {responsive: true});
+            colorByCondition(fig);
+            fig.data.filter((t, i) => isDataTrace(t))
+               .forEach((_, i) => addLogRegressionLine(fig, i, COLORS[i % COLORS.length]));
+            Plotly.react("plot-tf-expr", fig.data, fig.layout, { responsive: true });
         })();
         {% endif %}
 
-        {% if graph_compare_rnap %}
+        {% if graph_rnap_expr %}
         (function() {
-            const fig = {{ graph_compare_rnap | safe }};
+            const fig = {{ graph_rnap_expr | safe }};
+            applyLayout(fig);
             fig.layout.yaxis = fig.layout.yaxis || {};
             fig.layout.yaxis.type = "log";
-            applyLightTheme(fig);
-            Plotly.react("plot-compare-rnap", fig.data, fig.layout, {responsive: true});
+            colorByCondition(fig);
+            fig.data.filter((t, i) => isDataTrace(t))
+               .forEach((_, i) => addLogRegressionLine(fig, i, COLORS[i % COLORS.length]));
+            Plotly.react("plot-rnap-expr", fig.data, fig.layout, { responsive: true });
         })();
         {% endif %}
 
-        {% if graph_compare_both %}
+        {% if graph_tf_rnap %}
         (function() {
-            const fig = {{ graph_compare_both | safe }};
-            applyLightTheme(fig);
-            Plotly.react("plot-compare-both", fig.data, fig.layout, {responsive: true});
+            const fig = {{ graph_tf_rnap | safe }};
+            applyLayout(fig);
+            colorByCondition(fig);
+            Plotly.react("plot-tf-rnap", fig.data, fig.layout, { responsive: true });
         })();
         {% endif %}
     </script>

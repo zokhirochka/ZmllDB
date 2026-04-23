@@ -7,11 +7,9 @@ from plotting import (
     plot_tf_affinity_vs_expression,
     plot_rnap_energy_vs_expression,
     plot_tf_affinity_vs_rnap_energy,
-    plot_compare_tf_affinity,
-    plot_compare_rnap_energy,
-    plot_compare_tf_rnap,
     fig_to_json,
 )
+import pandas as pd
 
 app = Flask(__name__)
 app.config['APPLICATION_ROOT'] = '/students_26/Team12/project/app'
@@ -55,7 +53,7 @@ def about():
 @app.route('/help')
 def help_page():
     return render_template('help.html')
-    
+
 @app.route('/comparison')
 def comparison():
     return render_template('comparison.html')
@@ -134,73 +132,81 @@ def search():
 
 
 # ══════════════════════════════════════════════════════════════
-# Comparison route — handles BOTH form display AND results
+# Comparison route
 # ══════════════════════════════════════════════════════════════
 
 @app.route('/compare', methods=['GET'])
 def compare():
+    promoter   = request.args.get("promoter_name", "").strip()
+    tf         = request.args.get("TF_name", "").strip()
+    condition1 = request.args.get("Condition1", "").strip()
+    condition2 = request.args.get("Condition2", "").strip()
 
-    promoter1  = request.args.get("promoter_name1", "").strip()
-    promoter2  = request.args.get("promoter_name2", "").strip()
-    tf1        = request.args.get("TF_name1", "").strip()
-    tf2        = request.args.get("TF_name2", "").strip()
-    condition  = request.args.get("Condition", "").strip()
-
-    # If form not submitted, show empty comparison page
-    if not promoter1 or not promoter2 or not tf1 or not tf2 or not condition:
+    if not promoter or not tf or not condition1 or not condition2:
         return render_template("comparison.html")
-
-    error = None
-    data1 = data2 = None
 
     try:
         data1 = get_db().get_promoter_expr_and_binding(
-            promoter=promoter1, condition=condition, tf=tf1, include_rnap=True)
-    except ValueError as e:
-        error = f"Promoter 1 error: {e}"
-
-    try:
+            promoter=promoter, condition=condition1, tf=tf, include_rnap=True,
+        )
         data2 = get_db().get_promoter_expr_and_binding(
-            promoter=promoter2, condition=condition, tf=tf2, include_rnap=True)
+            promoter=promoter, condition=condition2, tf=tf, include_rnap=True,
+        )
     except ValueError as e:
-        error = (error + f" | Promoter 2 error: {e}") if error else f"Promoter 2 error: {e}"
-
-    if error:
-        return render_template("comparison.html", error=error)
+        return render_template("comparison.html", error=str(e))
 
     results1, colnames1, rowcount1 = data1["results"], data1["colnames"], data1["rowcount"]
     results2, colnames2, rowcount2 = data2["results"], data2["colnames"], data2["rowcount"]
 
-    graph_compare_tf   = None
-    graph_compare_rnap = None
-    graph_compare_both = None
+    graph_tf_expr   = None
+    graph_rnap_expr = None
+    graph_tf_rnap   = None
 
-    if rowcount1 > 0 and rowcount2 > 0:
-        graph_compare_tf   = fig_to_json(plot_compare_tf_affinity(
-            results1, colnames1, promoter1,
-            results2, colnames2, promoter2,
-        ))
-        graph_compare_rnap = fig_to_json(plot_compare_rnap_energy(
-            results1, colnames1, promoter1,
-            results2, colnames2, promoter2,
-        ))
-        graph_compare_both = fig_to_json(plot_compare_tf_rnap(
-            results1, colnames1, promoter1,
-            results2, colnames2, promoter2,
-        ))
+    if rowcount1 > 0 or rowcount2 > 0:
+
+        def label_results(results, colnames, label):
+            df = pd.DataFrame(results, columns=colnames)
+            df["cond"] = label
+            return df
+
+        df_combined = pd.concat([
+            label_results(results1, colnames1, condition1),
+            label_results(results2, colnames2, condition2),
+        ], ignore_index=True)
+
+        combined_results = df_combined.values.tolist()
+        combined_cols    = list(df_combined.columns)
+
+        graph_tf_expr   = fig_to_json(
+            plot_tf_affinity_vs_expression(
+                combined_results, combined_cols,
+                title=f"TF Affinity vs Expression — {condition1} vs {condition2}",
+            )
+        )
+        graph_rnap_expr = fig_to_json(
+            plot_rnap_energy_vs_expression(
+                combined_results, combined_cols,
+                title=f"RNAP Binding Energy vs Expression — {condition1} vs {condition2}",
+            )
+        )
+        graph_tf_rnap   = fig_to_json(
+            plot_tf_affinity_vs_rnap_energy(
+                combined_results, combined_cols,
+                title=f"TF Affinity vs RNAP Energy — {condition1} vs {condition2}",
+            )
+        )
 
     return render_template(
         "comparison.html",
-        promoter1          = promoter1,
-        promoter2          = promoter2,
-        tf1                = tf1,
-        tf2                = tf2,
-        condition          = condition,
-        rowcount1          = rowcount1,
-        rowcount2          = rowcount2,
-        graph_compare_tf   = graph_compare_tf,
-        graph_compare_rnap = graph_compare_rnap,
-        graph_compare_both = graph_compare_both,
+        promoter_name   = promoter,
+        tf_name         = tf,
+        condition1      = condition1,
+        condition2      = condition2,
+        rowcount1       = rowcount1,
+        rowcount2       = rowcount2,
+        graph_tf_expr   = graph_tf_expr,
+        graph_rnap_expr = graph_rnap_expr,
+        graph_tf_rnap   = graph_tf_rnap,
     )
 
 
