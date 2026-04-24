@@ -176,6 +176,7 @@
         {% endif %}
 
         <!-- ── Genomic Locus ── -->
+        {% if locus %}
         <div class="section-title">Genomic Locus</div>
         <div class="locus-card">
             <div class="locus-track">
@@ -193,6 +194,7 @@
                 <span><span class="legend-dot" style="background:var(--amber);"></span> TSS</span>
             </div>
         </div>
+        {% endif %}
 
         <!-- ── Results Table ── -->
         <div class="section-title">Raw Results</div>
