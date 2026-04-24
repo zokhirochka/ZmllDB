@@ -2,7 +2,7 @@ import json
 import math
 import decimal
 from flask import Flask, render_template, request
-from regseqdb import RegSeqDB
+from regseq import RegSeq
 
 app = Flask(__name__)
 
@@ -23,7 +23,7 @@ DB_CREDENTIALS = dict(
 )
 
 # ── Connect once at startup ───────────────────────────────────────
-db = RegSeqDB()
+db = RegSeq()
 try:
     db.connect(**DB_CREDENTIALS)
     print("✓ Connected to database.")
@@ -61,10 +61,9 @@ def comparison():
 # ── Debug ─────────────────────────────────────────────────────────
 @app.route('/debug-methods')
 def debug_methods():
-    from regseqdb import RegSeqDB
-    db_temp = RegSeqDB()
-    methods = [m for m in dir(db_temp) if not m.startswith('_')]
-    return f"<pre>{methods}</pre>"
+    import regseq, inspect
+    methods = [m for m in dir(RegSeq()) if not m.startswith('_')]
+    return f"<pre>File: {inspect.getfile(regseq)}\nMethods: {methods}</pre>"
 
 
 # ── Single Search ─────────────────────────────────────────────────
@@ -120,51 +119,24 @@ def search():
     has_data   = len(plot_data) > 0
     graph_json = json.dumps(plot_data, cls=DecimalEncoder) if has_data else None
 
-# ── Binding coords for genomic locus ─────────────────────────
+    # ── Binding coords for genomic locus ─────────────────────────
+    # FIX: use db.get_promoter_binding_coords() instead of a hardcoded
+    # duplicate query. This ensures consistency with regseq.py and
+    # benefits from its input validation.
     locus = None
     try:
-        import utils
-        locus_query = """
-            SELECT pID, pro_name, tss, seq,
-                    rnap.site_start as RNAP_start,
-                    rnap.site_stop  as RNAP_stop,
-                    tf.site_start   as TF_start,
-                    tf.site_stop    as TF_stop
-            FROM Promoters
-            JOIN (SELECT pID, site_start, site_stop FROM Promoters
-                            JOIN PromoterSequences AS ps USING(pID)
-                            JOIN BarcodeCounts USING(sID)
-                            JOIN Experiments USING (eID)
-                            JOIN BindingSitesTF USING(sID)
-                            JOIN TranscriptionFactors USING(tID)
-                    WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
-                          AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-                          AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s)
-                    ORDER BY affinity DESC LIMIT 1) as tf
-            USING(pID)
-            JOIN (SELECT pID, site_start, site_stop FROM Promoters
-                            JOIN PromoterSequences AS ps USING(pID)
-                            JOIN BarcodeCounts USING(sID)
-                            JOIN Experiments USING (eID)
-                            JOIN BindingSitesRNAP USING(sID)
-                    WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
-                          AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-                    ORDER BY energy DESC LIMIT 1) as rnap
-            USING (pID) LIMIT 1;
-        """
-        locus_inputs = [promoter, condition, tf, promoter, condition]
-        coords = utils.exec_query(cursor=db.cursor, query=locus_query, inputs=locus_inputs)
+        coords = db.get_promoter_binding_coords(promoter, condition, tf)
         if coords['rowcount'] > 0:
             _, _, tss, seq, rnap_start, rnap_stop, tf_start, tf_stop = coords['results'][0]
-            # normalize using the range of all coordinates
-            all_pos = [int(tss), int(rnap_start), int(rnap_stop), int(tf_start), int(tf_stop)]
-            pos_min = min(all_pos) - 20   # small padding
-            pos_max = max(all_pos) + 20
+
+            # Normalize all positions to a percentage-based canvas (10%–90%)
+            all_pos   = [int(tss), int(rnap_start), int(rnap_stop), int(tf_start), int(tf_stop)]
+            pos_min   = min(all_pos) - 20   # small padding
+            pos_max   = max(all_pos) + 20
             pos_range = pos_max - pos_min
 
             def to_pct(val):
                 return round(((int(val) - pos_min) / pos_range) * 80 + 10, 1)
-                # maps to 10%-90% so boxes don't touch the edges
 
             locus = {
                 "tss":        to_pct(tss),
@@ -174,7 +146,7 @@ def search():
                 "tf_stop":    to_pct(tf_stop),
             }
     except Exception:
-        pass
+        pass   # locus stays None; the template should handle missing locus gracefully
 
     return render_template('singlesearch.html',
         promoter_name  = promoter,
@@ -201,37 +173,19 @@ def compare():
     if not promoter or not tf:
         return render_template('comparison.html')
 
+    # FIX: use db.get_condition_comparison() instead of a hardcoded duplicate
+    # query. This keeps the SQL in one place and runs proper input validation.
     try:
-        inputs = [promoter, condition1, tf, promoter, condition2]
-        query = """
-            SELECT sID, e1.num_DNA as Cond1_DNA, e1.num_RNA as Cond1_RNA,
-                   e2.num_DNA as Cond2_DNA, e2.num_RNA as Cond2_RNA, energy, affinity
-            FROM (SELECT sID, SUM(num_DNA) as num_DNA, SUM(num_RNA) as num_RNA, energy, affinity
-                  FROM Promoters
-                  JOIN PromoterSequences AS ps USING(pID)
-                  JOIN BarcodeCounts USING(sID)
-                  JOIN Experiments USING (eID)
-                  JOIN BindingSitesRNAP using(sID)
-                  JOIN BindingSitesTF USING(sID)
-                  JOIN TranscriptionFactors USING(tID)
-                  WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
-                        AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-                        AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s)
-                  GROUP BY ps.seq) as e1
-            JOIN (SELECT sID, SUM(num_DNA) as num_DNA, SUM(num_RNA) as num_RNA
-                  FROM Promoters
-                  JOIN PromoterSequences AS ps USING(pID)
-                  JOIN BarcodeCounts USING(sID)
-                  JOIN Experiments USING (eID)
-                  WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
-                        AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
-                  GROUP BY ps.seq) as e2
-            USING (sID);
-        """
-        import utils
-        results_dict = utils.exec_query(cursor=db.cursor, query=query, inputs=inputs)
+        results_dict = db.get_condition_comparison(promoter, tf, condition1, condition2)
         results  = results_dict['results']
         rowcount = results_dict['rowcount']
+    except ValueError as e:
+        return render_template('comparison.html',
+                               error=str(e),
+                               promoter_name=promoter,
+                               tf_name=tf,
+                               condition1=condition1,
+                               condition2=condition2)
     except Exception as e:
         return f"<pre>QUERY ERROR:\n{e}</pre>", 500
 
