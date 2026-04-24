@@ -34,14 +34,14 @@
   --shadow-lg: 0 4px 8px rgba(28,26,22,0.06), 0 12px 40px rgba(28,26,22,0.10);
 }
 
-/* ──────────────── Reset─────────────────────------*/
+/* ── Reset ───────────────────────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-/* ------------- General Page Styling ------------- */
+/* ── General Page ─────────────────────────────── */
 body {
   font-family: var(--sans);
   background: var(--bg);
@@ -52,7 +52,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ------------- Title Section ------------- */
+/* ── Home Title ───────────────────────────────── */
 #defaultpageh1 {
   font-family: var(--serif);
   text-align: center;
@@ -75,8 +75,7 @@ body {
   line-height: 1.75;
 }
 
-
-/* -------- Buttons Section -------- */
+/* ── Navbar ───────────────────────────────────── */
 .navbar {
   background-color: var(--navy);
   border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -134,14 +133,8 @@ body {
   color: #fff;
   text-decoration: none;
 }
- 
-/*
-.nav-links li a.active {
-  background: rgba(217,119,6,0.15);
-  color: var(--amber-mid);
-}*/
 
-/* ── PAGE HEADER ─────────────────────────────────────────── */
+/* ── Page Header ──────────────────────────────── */
 .page-header {
   max-width: 1100px;
   margin: 0 auto;
@@ -174,16 +167,15 @@ body {
   line-height: 1.75;
   max-width: 640px;
 }
- 
 
-/* -------- sections -------- */
+/* ── Sections ─────────────────────────────────── */
 section {
   max-width: 1100px;
   margin: 28px auto;
   padding: 0 32px;
 }
 
-/* -------- Search Panel -------- */
+/* ── Search Panel ─────────────────────────────── */
 .search-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -218,7 +210,7 @@ section {
 .form-group select {
   font-family: var(--mono);
   font-size: 13.5px;
-  padding: 10px 14px;
+  padding: 10px 36px 10px 14px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg);
@@ -228,6 +220,12 @@ section {
   width: 100%;
   appearance: none;
   -webkit-appearance: none;
+}
+
+.form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239a948c' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
 }
  
 .form-group input[type="text"]:focus,
@@ -241,16 +239,14 @@ section {
   font-style: italic;
 }
  
-optgroup {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text3);
-}
- 
 option {
   font-size: 13px;
   color: var(--text);
   font-weight: 400;
+}
+
+.full-width {
+  width: 100%;
 }
  
 .submit-container {
@@ -280,17 +276,274 @@ option {
   transform: translateY(-1px);
 }
 
-/* -------- Graph Section -------- */
-.graphs {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  min-height: 200px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+/* ── Error Message ────────────────────────────── */
+.error-msg {
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  border-radius: var(--radius-sm);
+  padding: 10px 16px;
+  font-size: 13.5px;
+  margin-bottom: 20px;
 }
 
+/* ── Results Section ──────────────────────────── */
+.results-section {
+  max-width: 1100px;
+  margin: 28px auto;
+  padding: 0 32px;
+}
 
-/* -------- Table Styling -------- */
+.results-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--amber-mid);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.results-header {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 16px;
+}
+
+.results-header span {
+  color: var(--amber);
+}
+
+.section-title {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text3);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  margin: 28px 0 12px;
+}
+
+/* ── Query Meta Pills ─────────────────────────── */
+.query-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pill {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.pill strong {
+  color: var(--text);
+}
+
+/* ── Plot Grid ────────────────────────────────── */
+.plot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ── Plot Controls ────────────────────────────── */
+.plot-controls {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  justify-content: flex-end;
+}
+
+.plot-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.plot-btn:hover {
+  background: var(--bg-warm);
+  border-color: var(--border-strong);
+}
+
+/* ── Download Button ──────────────────────────── */
+.download-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.btn-download {
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--green);
+  background: var(--green-light);
+  border: 1px solid var(--green-mid);
+  border-radius: var(--radius-sm);
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  text-decoration: none;
+}
+
+.btn-download:hover {
+  background: #a7f3d0;
+}
+
+.plot-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.plot-card-full {
+  grid-column: 1 / -1;
+}
+
+.plot-card-header {
+  margin-bottom: 12px;
+}
+
+.plot-card-header h3 {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.plot-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+/* ── Plot Container ───────────────────────────── */
+.plot-container {
+  width: 100%;
+  height: 380px;
+}
+
+.no-data {
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text3);
+}
+
+/* ── Genomic Locus ────────────────────────────── */
+.locus-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+  margin-bottom: 1.5rem;
+}
+
+.locus-track {
+  position: relative;
+  height: 80px;
+  margin: 2rem 0 0.8rem;   /* extra top margin so TSS label has room */
+}
+
+.locus-track::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 0; right: 0;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+}
+
+.locus-tss {
+  position: absolute;
+  top: 15%;
+  width: 2px;
+  height: 70%;
+  background: var(--amber);
+  z-index: 2;
+  border-radius: 2px;
+}
+
+.locus-tss::after {
+  content: 'TSS';
+  position: absolute;
+  top: -22px;   /* pushed up enough so it clears the track top */
+  left: 4px;
+  font-size: 0.62rem;
+  color: var(--amber);
+  font-family: var(--mono);
+  letter-spacing: 0.06em;
+}
+
+.locus-box {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: var(--mono);
+  z-index: 2;
+  white-space: nowrap;
+}
+
+.locus-rnap {
+  background: rgba(31,41,55,0.12);
+  border: 1px solid var(--navy);
+  color: var(--navy);
+}
+
+.locus-tf {
+  background: rgba(26,107,80,0.12);
+  border: 1px solid var(--green);
+  color: var(--green);
+}
+
+.locus-legend {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.72rem;
+  color: var(--text2);
+  margin-top: 0.8rem;
+  font-family: var(--mono);
+}
+
+.locus-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* ── Table ────────────────────────────────────── */
 .table-section {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -348,127 +601,77 @@ tbody td {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
- 
 
-/* -------- Genomic Locus Section -------- */
-.genomic-locus {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  min-height: 150px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* -------- Form Layout -------- */
-.form-row {
-  display: flex;
-  gap: 20px;
-  margin-bottom: 15px;
-}
-
-.form-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.full-width {
-  width: 100%;
-}
-
-/* -------- Submit Button Alignment -------- */
-.submit-container {
+/* ── Show More Button ─────────────────────────── */
+.show-more-wrap {
   text-align: center;
-  margin-top: 20px;
+  padding: 16px;
 }
 
-.submit-container input {
-  background-color: #2563eb;
-  color: white;
-  padding: 10px 25px;
-  border: none;
-  border-radius: 6px;
+.btn-show-more {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 20px;
   cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.submit-container input:hover {
-  background-color: #1e4ed8;
+.btn-show-more:hover {
+  background: var(--bg-warm);
+  border-color: var(--border-strong);
 }
 
-/* ── Comparison Results ─────────────────────────────── */
-.results-section {
-    max-width: 1100px;
-    margin: 28px auto;
-    padding: 0 32px;
-}
-
-.results-meta {
-    margin-bottom: 1.5rem;
-    font-size: 14px;
-    color: var(--text2);
-}
-
-.results-meta strong {
-    color: var(--text);
-    font-weight: 600;
-}
-
-.rowcount {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text3);
-    margin-top: 4px;
-}
-
-.cond-badge {
-    display: inline-block;
-    padding: 0.15rem 0.6rem;
-    border-radius: 999px;
-    background: var(--amber-light);
-    color: var(--amber);
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.chart-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.chart-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: var(--shadow);
-}
-
-.chart-card--wide {
-    grid-column: 1 / -1;
-}
-
-.error-banner {
-    max-width: 700px;
-    margin: 2rem auto;
-    padding: 1rem 1.5rem;
-    border-radius: var(--radius);
-    text-align: center;
-    background: #fef2f2;
-    border: 1px solid #fca5a5;
-    color: #b91c1c;
-    font-size: 14px;
-}
-
+/* ── No Results ── UPDATED: red styling ───────── */
 .no-results {
-    max-width: 700px;
-    margin: 2rem auto;
-    padding: 1rem 1.5rem;
-    border-radius: var(--radius);
-    text-align: center;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text3);
-    font-size: 14px;
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius);
+  text-align: center;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ── Rows Hidden Note ── UPDATED: bold black ──── */
+.rows-hidden-note {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: #1c1a16;
+  padding: 10px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-warm);
+}
+
+/* ── Home Page Buttons ────────────────────────── */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 40px;
+}
+
+.btn {
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--amber);
+  color: #fff;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  padding: 12px 28px;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+}
+
+.btn:hover {
+  background: var(--amber-mid);
+  box-shadow: 0 4px 18px rgba(180,83,9,0.22);
+  transform: translateY(-1px);
 }

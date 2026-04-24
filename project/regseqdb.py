@@ -253,4 +253,3 @@ class RegSeqDB:
 		# Submit Query
 		results = self.__query(query, inputs)
 		return results
-

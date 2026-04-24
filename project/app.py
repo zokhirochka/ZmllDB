@@ -1,20 +1,19 @@
-# ============================================================
-# app.py  —  Flask backend for RegSeqDB
-# ============================================================
-from flask import Flask, request, render_template
+import json
+import math
+import decimal
+from flask import Flask, render_template, request
 from regseqdb import RegSeqDB
-from plotting import (
-    plot_tf_affinity_vs_expression,
-    plot_rnap_energy_vs_expression,
-    plot_tf_affinity_vs_rnap_energy,
-    fig_to_json,
-)
-import pandas as pd
 
 app = Flask(__name__)
-app.config['APPLICATION_ROOT'] = '/students_26/Team12/project/app'
 
-# ── DB credentials ────────────────────────────────────────────
+# ── Decimal JSON Encoder ──────────────────────────────────────────
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, decimal.Decimal):
+            return float(obj)
+        return super().default(obj)
+
+# ── Database credentials ──────────────────────────────────────────
 DB_CREDENTIALS = dict(
     host     = "bioed-new.bu.edu",
     port     = 4253,
@@ -23,192 +22,194 @@ DB_CREDENTIALS = dict(
     password = "ha3563douq",
 )
 
+# ── Connect once at startup ───────────────────────────────────────
 db = RegSeqDB()
-db.connect(**DB_CREDENTIALS)
+try:
+    db.connect(**DB_CREDENTIALS)
+    print("✓ Connected to database.")
+except Exception as e:
+    print(f"✗ Database connection failed: {e}")
 
 
-def get_db():
-    """Return DB connection, reconnecting if it has gone away."""
-    global db
-    try:
-        db.cursor.execute("SELECT 1")
-    except Exception:
-        db = RegSeqDB()
-        db.connect(**DB_CREDENTIALS)
-    return db
-
-
-# ══════════════════════════════════════════════════════════════
-# Static page routes
-# ══════════════════════════════════════════════════════════════
+# ── Routes ────────────────────────────────────────────────────────
 
 @app.route('/')
 def home():
     return render_template('defaultpage.html')
 
+
 @app.route('/about')
 def about():
     return render_template('about.html')
+
 
 @app.route('/help')
 def help_page():
     return render_template('help.html')
 
-@app.route('/comparison')
-def comparison():
-    return render_template('comparison.html')
 
 @app.route('/singlesearch')
 def singlesearch():
     return render_template('singlesearch.html')
 
 
-# ══════════════════════════════════════════════════════════════
-# Single search route
-# ══════════════════════════════════════════════════════════════
+@app.route('/comparison')
+def comparison():
+    return render_template('comparison.html')
 
-@app.route('/search', methods=['GET'])
+
+# ── Debug ─────────────────────────────────────────────────────────
+@app.route('/debug-methods')
+def debug_methods():
+    from regseqdb import RegSeqDB
+    db_temp = RegSeqDB()
+    methods = [m for m in dir(db_temp) if not m.startswith('_')]
+    return f"<pre>{methods}</pre>"
+
+
+# ── Single Search ─────────────────────────────────────────────────
+@app.route('/search')
 def search():
+    promoter  = request.args.get('promoter_name', '').strip()
+    tf        = request.args.get('TF_name', '').strip()
+    condition = request.args.get('Condition', 'glucose').strip()
 
-    promoter  = request.args.get("promoter_name", "").strip()
-    tf        = request.args.get("TF_name", "").strip()
-    condition = request.args.get("Condition", "").strip()
-
-    if not promoter or not tf or not condition:
-        return render_template("singlesearch.html")
+    if not promoter or not tf:
+        return render_template('singlesearch.html')
 
     try:
-        data = get_db().get_promoter_expr_and_binding(
-            promoter=promoter,
-            condition=condition,
-            tf=tf,
-            include_rnap=True,
-        )
-        results  = data["results"]
-        colnames = data["colnames"]
-        rowcount = data["rowcount"]
+        data = db.get_promoter_expr_and_binding(promoter, condition, tf)
     except ValueError as e:
-        return render_template("singlesearch.html", error=str(e))
+        return render_template('singlesearch.html',
+                               error=str(e),
+                               promoter_name=promoter,
+                               tf_name=tf,
+                               condition=condition)
 
-    graph_tf_expr   = None
-    graph_rnap_expr = None
-    graph_tf_rnap   = None
+    results  = data['results']   # (sID, num_DNA, num_RNA, energy, affinity)
+    rowcount = data['rowcount']
 
-    if rowcount > 0:
-        graph_tf_expr   = fig_to_json(plot_tf_affinity_vs_expression(results, colnames))
-        graph_rnap_expr = fig_to_json(plot_rnap_energy_vs_expression(results, colnames))
-        graph_tf_rnap   = fig_to_json(plot_tf_affinity_vs_rnap_energy(results, colnames))
-
-    col_idx = {name: i for i, name in enumerate(colnames)}
+    plot_data  = []
     table_rows = []
+
     for row in results:
-        num_dna    = row[col_idx["num_DNA"]]
-        num_rna    = row[col_idx["num_RNA"]]
-        energy     = row[col_idx.get("energy",   -1)]
-        affinity   = row[col_idx.get("affinity", -1)]
-        expression = (num_rna / num_dna) if num_dna > 0 else 0
-        table_rows.append({
-            "sID":        row[col_idx["sID"]],
-            "seq":        row[col_idx["seq"]] if "seq" in col_idx else "—",
-            "num_DNA":    num_dna,
-            "num_RNA":    num_rna,
-            "expression": expression,
-            "affinity":   affinity if affinity is not None else 0,
-            "energy":     energy   if energy   is not None else 0,
+        sID, num_DNA, num_RNA, energy, affinity = row
+
+        if num_DNA is None or num_RNA is None or num_DNA <= 0:
+            continue
+
+        plot_data.append({
+            "sID":      sID,
+            "dna":      float(num_DNA),
+            "rna":      float(num_RNA),
+            "energy":   float(energy)   if energy   is not None else None,
+            "affinity": float(affinity) if affinity is not None else None,
         })
 
-    return render_template(
-        "singlesearch.html",
-        promoter_name   = promoter,
-        tf_name         = tf,
-        condition       = condition,
-        rowcount        = rowcount,
-        graph_tf_expr   = graph_tf_expr,
-        graph_rnap_expr = graph_rnap_expr,
-        graph_tf_rnap   = graph_tf_rnap,
-        table_rows      = table_rows,
-        sigma_factor    = "σ70",
+        expr = float(num_RNA) / float(num_DNA)
+        table_rows.append({
+            "sID":        sID,
+            "seq":        "",
+            "num_DNA":    num_DNA,
+            "num_RNA":    num_RNA,
+            "expression": expr,
+            "affinity":   float(affinity) if affinity is not None else 0,
+            "energy":     float(energy)   if energy   is not None else 0,
+        })
+
+    has_data   = len(plot_data) > 0
+    graph_json = json.dumps(plot_data, cls=DecimalEncoder) if has_data else None
+
+    return render_template('singlesearch.html',
+        promoter_name  = promoter,
+        tf_name        = tf,
+        condition      = condition,
+        rowcount       = rowcount,
+        graph_json     = graph_json,
+        graph_tf_expr  = has_data,
+        graph_rnap_expr= has_data,
+        graph_tf_rnap  = has_data,
+        table_rows     = table_rows,
     )
 
 
-# ══════════════════════════════════════════════════════════════
-# Comparison route
-# ══════════════════════════════════════════════════════════════
-
-@app.route('/compare', methods=['GET'])
+# ── Comparison ────────────────────────────────────────────────────
+@app.route('/compare')
 def compare():
-    promoter   = request.args.get("promoter_name", "").strip()
-    tf         = request.args.get("TF_name", "").strip()
-    condition1 = request.args.get("Condition1", "").strip()
-    condition2 = request.args.get("Condition2", "").strip()
+    promoter   = request.args.get('promoter_name', '').strip()
+    tf         = request.args.get('TF_name', '').strip()
+    condition1 = request.args.get('Condition1', 'glucose').strip()
+    condition2 = request.args.get('Condition2', 'xylose').strip()
 
-    if not promoter or not tf or not condition1 or not condition2:
-        return render_template("comparison.html")
+    if not promoter or not tf:
+        return render_template('comparison.html')
 
     try:
-        data1 = get_db().get_promoter_expr_and_binding(
-            promoter=promoter, condition=condition1, tf=tf, include_rnap=True,
-        )
-        data2 = get_db().get_promoter_expr_and_binding(
-            promoter=promoter, condition=condition2, tf=tf, include_rnap=True,
-        )
-    except ValueError as e:
-        return render_template("comparison.html", error=str(e))
+        inputs = [promoter, condition1, tf, promoter, condition2]
+        query = """
+            SELECT sID, e1.num_DNA as Cond1_DNA, e1.num_RNA as Cond1_RNA,
+                   e2.num_DNA as Cond2_DNA, e2.num_RNA as Cond2_RNA, energy, affinity
+            FROM (SELECT sID, SUM(num_DNA) as num_DNA, SUM(num_RNA) as num_RNA, energy, affinity
+                  FROM Promoters
+                  JOIN PromoterSequences AS ps USING(pID)
+                  JOIN BarcodeCounts USING(sID)
+                  JOIN Experiments USING (eID)
+                  JOIN BindingSitesRNAP using(sID)
+                  JOIN BindingSitesTF USING(sID)
+                  JOIN TranscriptionFactors USING(tID)
+                  WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
+                        AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
+                        AND tID = (SELECT tID FROM TranscriptionFactors WHERE tf_name = %s)
+                  GROUP BY ps.seq) as e1
+            JOIN (SELECT sID, SUM(num_DNA) as num_DNA, SUM(num_RNA) as num_RNA
+                  FROM Promoters
+                  JOIN PromoterSequences AS ps USING(pID)
+                  JOIN BarcodeCounts USING(sID)
+                  JOIN Experiments USING (eID)
+                  WHERE pID = (SELECT pID FROM Promoters WHERE pro_name = %s)
+                        AND eID = (SELECT eID FROM Experiments WHERE cond = %s LIMIT 1)
+                  GROUP BY ps.seq) as e2
+            USING (sID);
+        """
+        import utils
+        results_dict = utils.exec_query(cursor=db.cursor, query=query, inputs=inputs)
+        results  = results_dict['results']
+        rowcount = results_dict['rowcount']
+    except Exception as e:
+        return f"<pre>QUERY ERROR:\n{e}</pre>", 500
 
-    results1, colnames1, rowcount1 = data1["results"], data1["colnames"], data1["rowcount"]
-    results2, colnames2, rowcount2 = data2["results"], data2["colnames"], data2["rowcount"]
+    try:
+        plot_data = []
+        for row in results:
+            sID, dna1, rna1, dna2, rna2, energy, affinity = row
+            dna1 = float(dna1) if dna1 is not None else 0
+            rna1 = float(rna1) if rna1 is not None else 0
+            dna2 = float(dna2) if dna2 is not None else 0
+            rna2 = float(rna2) if rna2 is not None else 0
+            if dna1 > 0 and rna1 > 0 and dna2 > 0 and rna2 > 0:
+                plot_data.append({
+                    "sID":      sID,
+                    "dna1":     dna1,
+                    "rna1":     rna1,
+                    "dna2":     dna2,
+                    "rna2":     rna2,
+                    "energy":   float(energy)   if energy   is not None else None,
+                    "affinity": float(affinity) if affinity is not None else None,
+                })
+        has_data = len(plot_data) > 0
+        graph_payload = {"rows": plot_data, "cond1": condition1, "cond2": condition2}
+        graph_json = json.dumps(graph_payload, cls=DecimalEncoder) if has_data else None
+    except Exception as e:
+        return f"<pre>DATA PROCESSING ERROR:\n{e}</pre>", 500
 
-    graph_tf_expr   = None
-    graph_rnap_expr = None
-    graph_tf_rnap   = None
-
-    if rowcount1 > 0 or rowcount2 > 0:
-
-        def label_results(results, colnames, label):
-            df = pd.DataFrame(results, columns=colnames)
-            df["cond"] = label
-            return df
-
-        df_combined = pd.concat([
-            label_results(results1, colnames1, condition1),
-            label_results(results2, colnames2, condition2),
-        ], ignore_index=True)
-
-        combined_results = df_combined.values.tolist()
-        combined_cols    = list(df_combined.columns)
-
-        graph_tf_expr   = fig_to_json(
-            plot_tf_affinity_vs_expression(
-                combined_results, combined_cols,
-                title=f"TF Affinity vs Expression — {condition1} vs {condition2}",
-            )
-        )
-        graph_rnap_expr = fig_to_json(
-            plot_rnap_energy_vs_expression(
-                combined_results, combined_cols,
-                title=f"RNAP Binding Energy vs Expression — {condition1} vs {condition2}",
-            )
-        )
-        graph_tf_rnap   = fig_to_json(
-            plot_tf_affinity_vs_rnap_energy(
-                combined_results, combined_cols,
-                title=f"TF Affinity vs RNAP Energy — {condition1} vs {condition2}",
-            )
-        )
-
-    return render_template(
-        "comparison.html",
-        promoter_name   = promoter,
-        tf_name         = tf,
-        condition1      = condition1,
-        condition2      = condition2,
-        rowcount1       = rowcount1,
-        rowcount2       = rowcount2,
-        graph_tf_expr   = graph_tf_expr,
-        graph_rnap_expr = graph_rnap_expr,
-        graph_tf_rnap   = graph_tf_rnap,
+    return render_template('comparison.html',
+        promoter_name=promoter, tf_name=tf,
+        condition1=condition1, condition2=condition2,
+        rowcount1=rowcount, rowcount2=rowcount,
+        graph_tf_expr=has_data, graph_json=graph_json,
     )
 
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+# ── Run ───────────────────────────────────────────────────────────
+if __name__ == '__main__':
+    app.run(debug=True)
